@@ -4,8 +4,14 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
+knitr::opts_chunk$set(
+  fig.width = 6,
+  fig.asp = .6,
+  out.width = "90%"
+)
+
+theme_set(theme_bw() + theme(legend.position = "bottom"))
 ```
 
 ## Problem 1
@@ -33,5 +39,65 @@ longitudinal_tidy %>%
   mutate(name = str_c(arm, "_", id)) %>% 
   ggplot(aes(x = week, y = observation, group = name, color = name)) +
   geom_line()
+```
+
+## Problem 2
+
+```{r}
+homicides = read_csv("./homicide-data.csv")
+```
+
+```{r}
+homicides_tidy = 
+  homicides %>% 
+  janitor::clean_names() %>% 
+  mutate(city_state = str_c(city, ", ",  state))
+
+homicides_total =
+  homicides_tidy %>% 
+  group_by(city_state) %>% 
+  summarize(n_total = n()) %>% 
+  filter(!(n_total == 1) )
+
+homicides_unsolved =
+  homicides_tidy %>% 
+  filter(disposition %in% c("Closed without arrest", "Open/No arrest")) %>% 
+  group_by(city_state) %>% 
+  summarize(n_unsolved = n())
+```
+
+```{r}
+baltimore_total = 
+  homicides_total %>% 
+  filter(city_state == "Baltimore, MD")
+
+baltimore_unsolved = 
+  homicides_unsolved %>% 
+  filter(city_state == "Baltimore, MD")
+
+baltimore_unsolved_prop = 
+  prop.test(baltimore_unsolved$n_unsolved, baltimore_total$n_total)
+
+baltimore_unsolved_prop %>%
+  broom::tidy() %>% 
+  select(estimate, conf.low, conf.high)
+```
+
+```{r}
+unsolved_prop = 
+  homicides_unsolved %>% 
+  mutate(prop_all = map2(.x = homicides_unsolved$n_unsolved, 
+                         .y = homicides_total$n_total, ~prop.test(.x, .y))) %>% 
+  mutate(prop_all = map(prop_all, broom::tidy)) %>% 
+  unnest() %>% 
+  select(city_state, estimate, conf.low, conf.high)
+```
+
+```{r}
+unsolved_prop %>% 
+  ggplot(aes(x = reorder(city_state, estimate), y = estimate)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high)) +
+  theme(axis.text.x = element_text(angle = 90, size = 8))
 ```
 
