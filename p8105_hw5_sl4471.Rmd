@@ -1,0 +1,37 @@
+---
+title: "Untitled"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+## Problem 1
+
+```{r}
+longitudinal_study = 
+  tibble(file_name = list.files("./data")) %>% 
+  mutate(result = map((str_c("./data/", file_name)), read_csv)) %>% 
+  unnest()
+```
+
+```{r}
+longitudinal_tidy =
+  longitudinal_study %>% 
+  separate(file_name, into = c("arm", "id"), sep = "_") %>% 
+  gather(key = week, value = observation, week_1:week_8) %>% 
+  mutate(id = str_replace(id, ".csv", ""),
+         arm = str_replace(arm, "con", "control"),
+         arm = str_replace(arm, "exp", "experimental"),
+         week = str_replace(week, "week_", ""))
+```
+
+```{r}
+longitudinal_tidy %>% 
+  mutate(name = str_c(arm, "_", id)) %>% 
+  ggplot(aes(x = week, y = observation, group = name, color = name)) +
+  geom_line()
+```
+
