@@ -8,8 +8,8 @@ output: github_document
 ```{r setup, include=FALSE}
 library(tidyverse)
 knitr::opts_chunk$set(
-  fig.width = 6,
-  fig.asp = .6,
+  fig.width = 6.5,
+  fig.asp = 0.8,
   out.width = "90%"
 )
 
@@ -25,6 +25,7 @@ longitudinal_study =
   tibble(file_name = list.files("./data")) %>% 
   mutate(result = map((str_c("./data/", file_name)), read_csv)) %>% 
   unnest()
+longitudinal_study
 ```
 
 ```{r tidy_data_1}
@@ -36,6 +37,7 @@ longitudinal_tidy =
          arm = str_replace(arm, "con", "control"),
          arm = str_replace(arm, "exp", "experimental"),
          week = str_replace(week, "week_", ""))
+longitudinal_tidy
 ```
 
 ### 1.2 Spaghetti plot 
@@ -121,8 +123,13 @@ We can learn about the proportion of unsolved homicides of each city from the da
 unsolved_prop %>% 
   mutate(city_state = fct_reorder(city_state, estimate)) %>% 
   ggplot(aes(x = city_state, y = estimate)) +
-  geom_point() +
-  geom_errorbar(aes(ymin = conf.low, ymax = conf.high)) +
-  theme(axis.text.x = element_text(angle = 90, size = 8, hjust = 1))
+  geom_point(size = 1) +
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), alpha = 0.5) +
+  labs(
+    title = "The estimates and CIs of unsolved homicides",
+    x = "City",
+    y = "Estimate of proportion") +
+  theme(axis.text.x = element_text(angle = 90, size = 8, hjust = 1)) 
 ```
 
+From the plot, Chicago has the highest proportion of unsolved homicides while Richmond has the lowest estimated value.
