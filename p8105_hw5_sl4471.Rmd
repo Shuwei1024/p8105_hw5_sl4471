@@ -1,6 +1,8 @@
 ---
-title: "Untitled"
-output: html_document
+title: "p8105_hw5_sl4471"
+author: Shuwei Liu
+date: 11/6/2018
+output: github_document
 ---
 
 ```{r setup, include=FALSE}
@@ -16,14 +18,16 @@ theme_set(theme_bw() + theme(legend.position = "bottom"))
 
 ## Problem 1
 
-```{r}
+### 1.1 Import and tidy data
+
+```{r import_data_1}
 longitudinal_study = 
   tibble(file_name = list.files("./data")) %>% 
   mutate(result = map((str_c("./data/", file_name)), read_csv)) %>% 
   unnest()
 ```
 
-```{r}
+```{r tidy_data_1}
 longitudinal_tidy =
   longitudinal_study %>% 
   separate(file_name, into = c("arm", "id"), sep = "_") %>% 
@@ -34,20 +38,32 @@ longitudinal_tidy =
          week = str_replace(week, "week_", ""))
 ```
 
-```{r}
+### 1.2 Spaghetti plot 
+
+```{r spaghetti_plot}
 longitudinal_tidy %>% 
-  mutate(name = str_c(arm, "_", id)) %>% 
-  ggplot(aes(x = week, y = observation, group = name, color = name)) +
-  geom_line()
+  mutate(arm_id = str_c(arm, "_", id)) %>% 
+  ggplot(aes(x = week, y = observation, group = arm_id, color = arm)) +
+  geom_line() +
+  labs(title = "Observations on each subject over time") 
 ```
+
+In order to show the results clearly, I chose line plot to show the trend of obseration on each subject over time. From the plot, the observation values of experimental arm group tended to increase compared with control group.
 
 ## Problem 2
 
-```{r}
+### 2.1 Import data
+
+```{r import_data_2}
 homicides = read_csv("./homicide-data.csv")
+str(homicides)
 ```
 
-```{r}
+This is a "tbl_df" dataset containing 52179 observations and 12 variables. The "52179*12" dataset have 12 variables including "uid", "reported_date", "victim_last", "victim_first", "victim_race", "victim_age", "victim_sex", "city", "state", "lat", "lon" and "disposition". It tells us the situation of homicide cases over years in 50 large cities of US.
+
+### 2.2 The number of homicides
+
+```{r number_of_homicides}
 homicides_tidy = 
   homicides %>% 
   janitor::clean_names() %>% 
@@ -66,7 +82,9 @@ homicides_unsolved =
   summarize(n_unsolved = n())
 ```
 
-```{r}
+We can know about the total number of homicides and the number of unsolved cases of each city. I notice that there are 51 cities in "homicides_total" dataset while there are 50 cities in "homicides_unsolved" dataset. The odd one is "Tulsa, AL". I filter this observation out to make it easier to do the following "prop.test" and assume that this was a mistake in raw data since there was only one homicide case in this city.
+
+```{r baltimore_prop}
 baltimore_total = 
   homicides_total %>% 
   filter(city_state == "Baltimore, MD")
@@ -80,10 +98,13 @@ baltimore_unsolved_prop =
 
 baltimore_unsolved_prop %>%
   broom::tidy() %>% 
-  select(estimate, conf.low, conf.high)
+  select(estimate, conf.low, conf.high) %>% 
+  knitr::kable()
 ```
 
-```{r}
+The estimate proportion of unsolved homicides in baltimore is 64.56%. And the confidence interval is [62.76%, 66.32%].
+
+```{r all_prop}
 unsolved_prop = 
   homicides_unsolved %>% 
   mutate(prop_all = map2(.x = homicides_unsolved$n_unsolved, 
@@ -91,13 +112,17 @@ unsolved_prop =
   mutate(prop_all = map(prop_all, broom::tidy)) %>% 
   unnest() %>% 
   select(city_state, estimate, conf.low, conf.high)
+unsolved_prop
 ```
 
-```{r}
+We can learn about the proportion of unsolved homicides of each city from the dataset above.
+
+```{r plot}
 unsolved_prop %>% 
-  ggplot(aes(x = reorder(city_state, estimate), y = estimate)) +
+  mutate(city_state = fct_reorder(city_state, estimate)) %>% 
+  ggplot(aes(x = city_state, y = estimate)) +
   geom_point() +
   geom_errorbar(aes(ymin = conf.low, ymax = conf.high)) +
-  theme(axis.text.x = element_text(angle = 90, size = 8))
+  theme(axis.text.x = element_text(angle = 90, size = 8, hjust = 1))
 ```
 
