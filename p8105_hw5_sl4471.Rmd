@@ -20,7 +20,7 @@ theme_set(theme_bw() + theme(legend.position = "bottom"))
 
 ### 1.1 Import and tidy data
 
-```{r import_data_1}
+```{r import_data_1, message = FALSE}
 longitudinal_study = 
   tibble(file_name = list.files("./data")) %>% 
   mutate(result = map((str_c("./data/", file_name)), read_csv)) %>% 
