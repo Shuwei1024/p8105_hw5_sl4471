@@ -113,16 +113,23 @@ unsolved_prop =
   homicides_unsolved %>% 
   mutate(prop_all = map2(.x = homicides_unsolved$n_unsolved, 
                          .y = homicides_total$n_total, ~prop.test(.x, .y))) %>% 
-  mutate(prop_all = map(prop_all, broom::tidy)) %>% 
+  mutate(prop_all = map(prop_all, broom::tidy))
+
+list_columns = 
+  unsolved_prop %>% pull(prop_all)
+list_columns
+
+unsolved_prop_tidy = 
+  unsolved_prop %>% 
   unnest() %>% 
   select(city_state, estimate, conf.low, conf.high)
-unsolved_prop
+unsolved_prop_tidy
 ```
 
 We can learn about the proportion of unsolved homicides of each city from the dataset above.
 
 ```{r error_plot}
-unsolved_prop %>% 
+unsolved_prop_tidy %>% 
   mutate(city_state = fct_reorder(city_state, estimate)) %>% 
   ggplot(aes(x = city_state, y = estimate)) +
   geom_point(size = 0.7) +
