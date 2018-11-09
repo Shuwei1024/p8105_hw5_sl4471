@@ -51,8 +51,7 @@ longitudinal_tidy %>%
   labs(title = "Observations on each subject over time") 
 ```
 
-In order to compare the results of different group clearly, I chose to differentiate lines by arms. I also tried to show the plot in two panels and made each individual to have different colors. However, the latter one was a little bit messy and made it harder to detect the trend of the observations overtime.
-
+In order to compare the results of different group clearly, I chose to differentiate lines by arms. 
 From the plot, the observation values of experimental arm group tended to increase compared with control group.
 
 ## Problem 2
